@@ -11,6 +11,11 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,10 +25,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-@e+2=cuiu4*7ia3!+e0gjy=yz1dt9+!6a0t8gfr!5$kfshi%mo'
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-default-key')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
 
 ALLOWED_HOSTS = []
 
@@ -31,6 +36,8 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'colorfield',
+    'admin_interface',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -89,11 +96,11 @@ WSGI_APPLICATION = 'pharmacyapp.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'pharmacy_db',
-        'USER': 'root',
-        'PASSWORD': '040204',
-        'HOST': ''
+        'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.mysql'),
+        'NAME': os.getenv('DB_NAME', 'pharmacy_db'),
+        'USER': os.getenv('DB_USER', 'root'),
+        'PASSWORD': os.getenv('DB_PASSWORD', '040204'),
+        'HOST': os.getenv('DB_HOST', '')
     }
 }
 
@@ -104,9 +111,9 @@ pymysql.install_as_MySQLdb()
 import cloudinary.uploader
 
 cloudinary.config(
-    cloud_name="duk7gxwvc",
-    api_key="653944787632934",
-    api_secret="GY20iNSIGW6CdrY1s1cDGwMKrqY",
+    cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME', 'duk7gxwvc'),
+    api_key=os.getenv('CLOUDINARY_API_KEY', '653944787632934'),
+    api_secret=os.getenv('CLOUDINARY_API_SECRET', 'GY20iNSIGW6CdrY1s1cDGwMKrqY'),
     secure=True
 )
 
@@ -151,3 +158,10 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# OAuth2 Configuration
+CLIENT_ID = os.getenv('CLIENT_ID', 'd0oHvHunyv1BzSkb5XHHMXd94A2n1hZU7bp8hUsJ')
+CLIENT_SECRET = os.getenv('CLIENT_SECRET', 'Xz5P8TuRWqhCE5xsTM6nZwlzDpEe0o0rv6LjkiZrdrBTIk9yvX3ExiiC1ch5uefnT3mFwMREoBVSRMPpitda72jzEfh61CbwqhX05v5cQJcay4fxewCBvZ0916v6ylSh')
+
+# OpenAI API Configuration for Chatbot
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', 'your-openai-api-key-here')
