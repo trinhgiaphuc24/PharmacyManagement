@@ -30,7 +30,11 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-default-key')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['b748e4ff3b37.ngrok-free.app', '127.0.0.1', 'localhost']
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://b748e4ff3b37.ngrok-free.app'
+]
 
 
 # Application definition
@@ -63,6 +67,10 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': ('oauth2_provider.contrib.rest_framework.OAuth2Authentication',)
+}
 
 ROOT_URLCONF = 'pharmacyapp.urls'
 
@@ -109,6 +117,14 @@ import pymysql
 pymysql.install_as_MySQLdb()
 
 import cloudinary.uploader
+
+# Cache Configuration
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+    }
+}
 
 cloudinary.config(
     cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME', 'duk7gxwvc'),
@@ -163,5 +179,21 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CLIENT_ID = os.getenv('CLIENT_ID', 'd0oHvHunyv1BzSkb5XHHMXd94A2n1hZU7bp8hUsJ')
 CLIENT_SECRET = os.getenv('CLIENT_SECRET', 'Xz5P8TuRWqhCE5xsTM6nZwlzDpEe0o0rv6LjkiZrdrBTIk9yvX3ExiiC1ch5uefnT3mFwMREoBVSRMPpitda72jzEfh61CbwqhX05v5cQJcay4fxewCBvZ0916v6ylSh')
 
+# VNPay Configuration
+VNPAY_TMN_CODE = os.getenv('VNPAY_TMN_CODE')  # Mã website của bạn tại VNPay
+VNPAY_HASH_SECRET = os.getenv('VNPAY_HASH_SECRET')  # Secret key
+VNPAY_URL = os.getenv('VNPAY_URL')  # URL sandbox, production: https://vnpayment.vn/paymentv2/vpcpay.html
+VNPAY_RETURN_URL = os.getenv('VNPAY_RETURN_URL')
+VNPAY_IPN_URL = os.getenv('VNPAY_IPN_URL')
+
 # OpenAI API Configuration for Chatbot
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', 'your-openai-api-key-here')
+
+# Email Configuration
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'trinhgiaphuc24@gmail.com'  # Gmail của bạn
+EMAIL_HOST_PASSWORD = 'gmld saql gnnw pbos'  # App Password (xem bên dưới)
+DEFAULT_FROM_EMAIL = 'trinhgiaphuc24@gmail.com'
