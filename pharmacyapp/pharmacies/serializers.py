@@ -168,14 +168,21 @@ class OrderSerializer(serializers.ModelSerializer):
     details = OrderDetailSerializer(many=True, read_only=True)
     online_order = OnlineOrderSerializer(read_only=True)
     payment_detail = PaymentDetailSerializer(read_only=True)
-    user_name = serializers.CharField(source='user.first_name', read_only=True)
-    
+    user_name = serializers.SerializerMethodField()
+    phone_number = serializers.CharField(source='user.phone_number', read_only=True)
+    email = serializers.EmailField(source='user.email', read_only=True)
+
     class Meta:
         model = Order
         fields = [
             'id', 'date', 'status', 'createdAt', 'paymentMethod', 'total', 
-            'user', 'user_name', 'shipping_fee', 'details', 'online_order', 'payment_detail'
+            'user', 'user_name', 'shipping_fee', 'details', 'online_order', 'payment_detail', 'phone_number', 'email'
         ]
+
+    def get_user_name(self, obj):
+        if obj.user:
+            return f"{obj.user.first_name} {obj.user.last_name}".strip()
+        return ""
 
 
 class CreateOrderSerializer(serializers.Serializer):

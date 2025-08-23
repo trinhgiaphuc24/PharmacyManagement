@@ -29,7 +29,6 @@ urlpatterns = [
     
     # Email test endpoint
     path('order-email/', views.order_email, name='order-email'),
-
     # path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     # path('send-email/', send_email, name='send_email'),
     # path('chat/', views.ChatView.as_view(), name='chat'),

@@ -10,9 +10,6 @@ logger = logging.getLogger(__name__)
 class EmailService:
     @staticmethod
     def send_order_success_email(order):
-        """
-        Gửi email thông báo đặt hàng thành công
-        """
         try:
             # Kiểm tra xem email đã được gửi chưa (dựa trên log hoặc cache)
             cache_key = f"email_sent_order_{order.id}"

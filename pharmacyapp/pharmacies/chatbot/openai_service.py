@@ -1,23 +1,20 @@
 import logging
+import os
 import re
+from openai import OpenAI
+from dotenv import load_dotenv
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 
 
 class OpenAIService:
-    """Service class để xử lý OpenAI API cho chatbot"""
-    
     def __init__(self):
         self.client = None
         self.openai_available = False
-        self.api_key = "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"
-        
-        try:
-            from openai import OpenAI
-            self.client = OpenAI(api_key=self.api_key)
-            self.openai_available = True
-        except Exception as e:
-            logger.error(f"Failed to initialize OpenAI: {e}")
+        self.api_key = os.getenv("OPENAI_API_KEY") 
+        self.client = OpenAI(api_key=self.api_key)
+        self.openai_available = True
     
     def create_prompt_with_medicines(self, user_question, context):
         """Tạo prompt cho trường hợp có thuốc"""
