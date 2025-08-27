@@ -14,6 +14,7 @@ from rest_framework.views import APIView
 from pharmacies.models import *
 from pharmacies import serializers, paginators, perms
 from pharmacies.email_service import EmailService
+from pharmacies.websocket_service import websocket_service
 from rest_framework.response import Response
 from rest_framework.decorators import action, api_view, permission_classes
 from django.db.models import Q
@@ -30,7 +31,7 @@ from .serializers import OrderSerializer, CreateOrderSerializer, ShippingFeeSeri
 class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
     queryset = User.objects.filter(is_active=True)
     serializer_class = serializers.UserSerializer
-    parser_classes = [parsers.MultiPartParser]
+    parser_classes = [parsers.JSONParser, parsers.MultiPartParser]
     permission_classes = [AllowAny]
 
     @action(methods=['GET', 'PUT'], url_path='current-user', detail=False, permission_classes=[IsAuthenticated])
@@ -256,6 +257,20 @@ class OrderViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIV
         if serializer.is_valid():
             try:
                 order = serializer.save()
+            
+                websocket_service.send_order_created_notification(
+                    user_id=request.user.id,
+                    order_id=order.id,
+                    total=order.total
+                )
+                
+                customer_name = f"{request.user.first_name} {request.user.last_name}"
+                websocket_service.send_staff_new_order_notification(
+                    order_id=order.id,
+                    customer_name=customer_name,
+                    total=order.total
+                )
+
                 order_serializer = OrderSerializer(order, context={'request': request})
                 return Response({
                     'success': True,
@@ -327,8 +342,22 @@ class OrderViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIV
                 'success': False,
                 'message': 'Trạng thái mới là bắt buộc'
             }, status=status.HTTP_400_BAD_REQUEST)
+        
+        old_status = order.status
         order.status = new_status
         order.save()
+        
+        # 📦 Gửi thông báo thay đổi trạng thái cho customer
+        try:
+            websocket_service.send_order_status_update(
+                user_id=order.user.id,
+                order_id=order.id,
+                old_status=old_status,
+                new_status=new_status
+            )
+        except Exception as ws_error:
+            print(f"⚠️ WebSocket status notification error: {ws_error}")
+        
         serializer = OrderSerializer(order, context={'request': request})
         return Response({
             'success': True,
@@ -336,8 +365,78 @@ class OrderViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIV
             'data': serializer.data
         })
     
+    @action(detail=True, methods=['patch'], url_path='update-shipping')
+    def update_shipping(self, request, pk=None):
+        try:
+            order = Order.objects.filter(pk=pk, user=request.user).first()
+            if not order:
+                return Response({
+                    'success': False,
+                    'message': 'Không tìm thấy đơn hàng'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Only allow editing for pending or waiting orders
+            if order.status not in ['pending', 'waiting_for_pickup']:
+                return Response({
+                    'success': False,
+                    'message': 'Chỉ có thể chỉnh sửa đơn hàng đang chờ xử lý hoặc chờ lấy hàng'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Get shipping information from request
+            full_name = request.data.get('full_name')
+            phone_number = request.data.get('phoneNumber')
+            specific = request.data.get('specific')
+            commune = request.data.get('commune')
+            district = request.data.get('district')
+            province = request.data.get('province')
+            note = request.data.get('note')
+            
+            if not full_name or not phone_number:
+                return Response({
+                    'success': False,
+                    'message': 'Vui lòng điền đầy đủ thông tin bắt buộc'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            online_order = getattr(order, 'online_order', None)
+            if online_order:
+                ship_info, created = OnlineOrderShip.objects.get_or_create(
+                    online_order=online_order,
+                    defaults={
+                        'full_name': full_name,
+                        'phoneNumber': phone_number,
+                        'specific': specific or '',
+                        'commune': commune or '',
+                        'district': district or '',
+                        'province': province or '',
+                        'note': note or ''
+                    }
+                )
+                
+                if not created:
+                    ship_info.full_name = full_name
+                    ship_info.phoneNumber = phone_number
+                    ship_info.specific = specific or ''
+                    ship_info.commune = commune or ''
+                    ship_info.district = district or ''
+                    ship_info.province = province or ''
+                    ship_info.note = note or ''
+                    ship_info.save()
+            
+            serializer = OrderSerializer(order, context={'request': request})
+            return Response({
+                'success': True,
+                'message': 'Cập nhật thông tin giao hàng thành công',
+                'data': serializer.data
+            })
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': f'Lỗi cập nhật thông tin: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    
     def remove_vietnamese_accents(self, text):
-        """Remove Vietnamese accents from text"""
         if not text:
             return ""
         

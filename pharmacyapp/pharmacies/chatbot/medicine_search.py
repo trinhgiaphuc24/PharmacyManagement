@@ -6,8 +6,6 @@ logger = logging.getLogger(__name__)
 
 
 class MedicineSearchService:
-    """Service class để xử lý tìm kiếm thuốc cho chatbot"""
-    
     def __init__(self):
         self.genre_mapping = {
             # Gan
@@ -91,6 +89,7 @@ class MedicineSearchService:
             'viêm khớp': [4],
             'fastum': [4],
             'salonpas': [4],
+            'vai gáy': [4],
             'thoái hóa cột sống': [4],
             'thoái hóa khớp': [4],
             'đau lưng': [4],
@@ -117,6 +116,7 @@ class MedicineSearchService:
             'đầy hơi': [12],
             'chướng bụng': [12],
             'ợ nóng': [12],
+            'buồn nôn': [12],
             'ợ chua': [12],
             'khó tiêu': [12],
             'dạ dày': [12],
@@ -310,12 +310,12 @@ class MedicineSearchService:
             exact_match_medicines = Medicine.objects.filter(name_query).select_related('medicineGenre', 'produce').prefetch_related('images')[:3]
             
             # Nếu không tìm thấy với AND, thử với OR
-            if not exact_match_medicines.exists():
-                name_query_or = Q()
-                for word in significant_words:
-                    name_query_or |= Q(name__icontains=word)
+            # if not exact_match_medicines.exists():
+            #     name_query_or = Q()
+            #     for word in significant_words:
+            #         name_query_or |= Q(name__icontains=word)
                 
-                exact_match_medicines = Medicine.objects.filter(name_query_or).select_related('medicineGenre', 'produce').prefetch_related('images')[:3]
+            #     exact_match_medicines = Medicine.objects.filter(name_query_or).select_related('medicineGenre', 'produce').prefetch_related('images')[:3]
         
         return exact_match_medicines
     
@@ -358,48 +358,48 @@ class MedicineSearchService:
         
         return medicines
     
-    def search_fallback(self, question):
-        """Tìm kiếm fallback theo tên thuốc và từ khóa"""
-        medicines = Medicine.objects.filter(
-            name__icontains=question
-        ).exclude(
-            medicineGenre_id=1  # Loại trừ thuốc sinh sản
-        ).select_related('medicineGenre', 'produce').prefetch_related('images')[:3]
+    # def search_fallback(self, question):
+    #     """Tìm kiếm fallback theo tên thuốc và từ khóa"""
+    #     medicines = Medicine.objects.filter(
+    #         name__icontains=question
+    #     ).exclude(
+    #         medicineGenre_id=1  # Loại trừ thuốc sinh sản
+    #     ).select_related('medicineGenre', 'produce').prefetch_related('images')[:3]
         
-        if not medicines.exists():
-            words = question.split()
-            significant_words = [
-                word.lower() for word in words 
-                if len(word) > 4 and word.lower() not in self.excluded_words
-            ]
+    #     if not medicines.exists():
+    #         words = question.split()
+    #         significant_words = [
+    #             word.lower() for word in words 
+    #             if len(word) > 4 and word.lower() not in self.excluded_words
+    #         ]
             
-            for word in significant_words:
-                medicines = Medicine.objects.filter(
-                    Q(name__icontains=word) |
-                    Q(benefit__icontains=word) |
-                    Q(use__icontains=word)
-                ).exclude(
-                    medicineGenre_id=1
-                ).select_related('medicineGenre', 'produce').prefetch_related('images')[:3]
-                if medicines.exists():
-                    break
+    #         for word in significant_words:
+    #             medicines = Medicine.objects.filter(
+    #                 Q(name__icontains=word) |
+    #                 Q(benefit__icontains=word) |
+    #                 Q(use__icontains=word)
+    #             ).exclude(
+    #                 medicineGenre_id=1
+    #             ).select_related('medicineGenre', 'produce').prefetch_related('images')[:3]
+    #             if medicines.exists():
+    #                 break
             
-            # Nếu vẫn không tìm thấy, thử với từ 4 ký tự
-            if not medicines.exists():
-                words_4_chars = [
-                    word.lower() for word in words 
-                    if len(word) == 4 and word.lower() not in self.excluded_words
-                ]
-                for word in words_4_chars:
-                    medicines = Medicine.objects.filter(
-                        name__iregex=r'\b' + word + r'\b'
-                    ).exclude(
-                        medicineGenre_id=1
-                    ).select_related('medicineGenre', 'produce').prefetch_related('images')[:3]
-                    if medicines.exists():
-                        break
+    #         # Nếu vẫn không tìm thấy, thử với từ 4 ký tự
+    #         if not medicines.exists():
+    #             words_4_chars = [
+    #                 word.lower() for word in words 
+    #                 if len(word) == 4 and word.lower() not in self.excluded_words
+    #             ]
+    #             for word in words_4_chars:
+    #                 medicines = Medicine.objects.filter(
+    #                     name__iregex=r'\b' + word + r'\b'
+    #                 ).exclude(
+    #                     medicineGenre_id=1
+    #                 ).select_related('medicineGenre', 'produce').prefetch_related('images')[:3]
+    #                 if medicines.exists():
+    #                     break
         
-        return medicines
+    #     return medicines
     
     def format_medicine_data(self, medicines):
         """Format thông tin thuốc thành context và medicine_list"""
@@ -414,7 +414,6 @@ class MedicineSearchService:
             context += f"- Cách dùng: {med.use or 'Không có thông tin'}\n"
             context += f"- Nhà sản xuất: {med.produce.name if med.produce else 'Không rõ'}\n\n"
             
-            # Lấy hình ảnh thuốc nếu có
             medicine_images = []
             if hasattr(med, 'images'):
                 medicine_images = [img.imgMedicineUrl.url for img in med.images.all() if img.imgMedicineUrl]
@@ -451,10 +450,10 @@ class MedicineSearchService:
                 return self.format_medicine_data(genre_medicines)
             
             # BƯỚC 3: Fallback search
-            fallback_medicines = self.search_fallback(question)
+            # fallback_medicines = self.search_fallback(question)
             
-            if fallback_medicines.exists():
-                return self.format_medicine_data(fallback_medicines)
+            # if fallback_medicines.exists():
+            #     return self.format_medicine_data(fallback_medicines)
             
             return "Không tìm thấy thông tin thuốc.\n", []
             

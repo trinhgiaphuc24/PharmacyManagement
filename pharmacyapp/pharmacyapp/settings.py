@@ -40,6 +40,7 @@ CSRF_TRUSTED_ORIGINS = [
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',  # Add daphne at the top for WebSocket support
     'colorfield',
     'admin_interface',
     'django.contrib.admin',
@@ -54,7 +55,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'drf_yasg',
     'oauth2_provider',
-    'corsheaders'
+    'corsheaders',
+    'channels',  # Add channels for WebSocket
 ]
 
 MIDDLEWARE = [
@@ -97,6 +99,21 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'pharmacyapp.wsgi.application'
+
+# Channels Configuration for WebSocket
+ASGI_APPLICATION = 'pharmacyapp.asgi.application'
+
+# Channel Layers for Redis
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        # Fallback to Redis when available
+        # 'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        # 'CONFIG': {
+        #     "hosts": [('127.0.0.1', 6379)],
+        # },
+    },
+}
 
 
 # Database
@@ -197,3 +214,4 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'trinhgiaphuc24@gmail.com'  
 EMAIL_HOST_PASSWORD = 'gmld saql gnnw pbos' 
 DEFAULT_FROM_EMAIL = 'trinhgiaphuc24@gmail.com'
+

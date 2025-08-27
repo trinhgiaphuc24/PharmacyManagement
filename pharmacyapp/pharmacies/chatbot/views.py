@@ -4,7 +4,6 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework import status
-from pharmacies.models import ChatHistory
 from pharmacies import serializers
 from .medicine_search import MedicineSearchService
 from .openai_service import OpenAIService
@@ -13,7 +12,6 @@ logger = logging.getLogger(__name__)
 
 
 class ChatBotView(APIView):
-    """ChatBot API View - refactored version"""
     permission_classes = [AllowAny]
     
     def __init__(self, **kwargs):
@@ -42,22 +40,12 @@ class ChatBotView(APIView):
             )
             bot_response = bot_response_data['response']
             
-            # Lưu lịch sử chat
-            user = request.user if request.user.is_authenticated else None
-            chat_history = ChatHistory.objects.create(
-                user=user,
-                user_message=user_message,
-                bot_response=bot_response,
-                session_id=session_id if not user else None
-            )
-            
-            # Format response để trả về frontend
+            # Format response để trả về frontend 
             response_data = {
-                'chat_id': chat_history.id,
                 'user_message': user_message,
                 'bot_response': bot_response,
                 'session_id': session_id,
-                'timestamp': chat_history.created_at.isoformat(),
+                'timestamp': None,
                 'type': bot_response_data['type'],
                 'response_type': bot_response_data['type'],
                 'medicines_count': bot_response_data.get('medicines_count', 0),
@@ -73,7 +61,6 @@ class ChatBotView(APIView):
             return Response(response_data, status=status.HTTP_200_OK)
             
         except Exception as e:
-            logger.error(f"Chatbot error: {str(e)}")
             return Response(
                 {
                     'error': 'Xin lỗi, tôi gặp sự cố khi xử lý câu hỏi của bạn. Vui lòng thử lại sau.',
@@ -85,18 +72,6 @@ class ChatBotView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
-    def get(self, request):
-        """Lấy lịch sử chat của user hoặc session"""
-        session_id = request.query_params.get('session_id')
-        
-        if request.user.is_authenticated:
-            # User đã đăng nhập - lấy lịch sử theo user
-            chat_history = ChatHistory.objects.filter(user=request.user).order_by('-created_at')[:20]
-        elif session_id:
-            # Anonymous user - lấy lịch sử theo session_id
-            chat_history = ChatHistory.objects.filter(session_id=session_id).order_by('-created_at')[:20]
-        else:
-            return Response({'chats': []})
-        
-        serializer = serializers.ChatHistorySerializer(chat_history, many=True)
-        return Response({'chats': serializer.data})
+    # def get(self, request):
+    #     """Không lưu lịch sử chat - trả về empty"""
+    #     return Response({'chats': [], 'message': 'Lịch sử chat không được lưu trữ'})

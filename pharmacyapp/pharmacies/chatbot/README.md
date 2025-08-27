@@ -22,7 +22,6 @@ pharmacies/
 - **Class**: `ChatBotView`
 - **Methods**:
   - `post()`: Xử lý tin nhắn từ user
-  - `get()`: Lấy lịch sử chat
 
 ### 2. `medicine_search.py`
 - **Chức năng**: Service tìm kiếm thuốc trong database

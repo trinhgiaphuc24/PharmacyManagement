@@ -301,8 +301,3 @@ class CreateOrderSerializer(serializers.Serializer):
         
         return order
 
-
-class ChatHistorySerializer(ModelSerializer):
-    class Meta:
-        model = ChatHistory
-        fields = ['id', 'user_message', 'bot_response', 'created_at']

@@ -147,18 +147,5 @@ class OnlineOrderShip(models.Model):
     def __str__(self):
         return f"ShipInfo for OnlineOrder {self.online_order.id}"
 
-class ChatHistory(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="chat_history", null=True, blank=True)
-    user_message = models.TextField()
-    bot_response = models.TextField()
-    session_id = models.CharField(max_length=100, null=True, blank=True)  # Cho anonymous users
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
-        ordering = ['-created_at']
-        
-    def __str__(self):
-        return f"Chat {self.id} - {self.created_at}"
-
 
 
