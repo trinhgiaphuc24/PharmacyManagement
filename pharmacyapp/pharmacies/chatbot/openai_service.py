@@ -5,13 +5,9 @@ from openai import OpenAI
 from dotenv import load_dotenv
 load_dotenv()
 
-logger = logging.getLogger(__name__)
-
 
 class OpenAIService:
     def __init__(self):
-        self.client = None
-        self.openai_available = False
         self.api_key = os.getenv("OPENAI_API_KEY") 
         self.client = OpenAI(api_key=self.api_key)
         self.openai_available = True
@@ -63,11 +59,6 @@ class OpenAIService:
                     KHÔNG đề cập bất kỳ tên thuốc cụ thể nào. Trả lời ngắn gọn, không emoji."""
     
     def call_openai_api(self, prompt):
-        """Gọi OpenAI API và trả về response"""
-        # try:
-        #     if not self.openai_available:
-        #         return "Xin lỗi, hệ thống AI tư vấn đang bảo trì. Vui lòng liên hệ dược sĩ trực tiếp."
-            
         response = self.client.chat.completions.create(
                 model="gpt-4-turbo",
                 messages=[
@@ -83,31 +74,11 @@ class OpenAIService:
                 max_tokens=500,
                 temperature=0.7
             )
-            
-        ai_response = response.choices[0].message.content.strip()
-            
-            # # Loại bỏ emoji nếu có (fallback)
-            # ai_response = re.sub(r'[^\w\s\u00C0-\u024F\u1E00-\u1EFF.,!?;:()\-]', '', ai_response, flags=re.UNICODE)
-            
+        ai_response = response.choices[0].message.content.strip()     
         return ai_response
-            
-        # except Exception as e:
-        #     logger.error(f"OpenAI API call error: {str(e)}")
-        #     return "Xin lỗi, tôi gặp sự cố khi xử lý câu hỏi của bạn. Vui lòng thử lại sau."
     
     def generate_response(self, user_question, medicine_context, medicines):
-        """Generate response cho chatbot"""
-        # try:
-            # if not self.openai_available:
-            #     return {
-            #         'response': 'Xin lỗi, hệ thống AI tư vấn đang bảo trì. Vui lòng liên hệ dược sĩ trực tiếp.',
-            #         'medicines': [],
-            #         'type': 'error',
-            #         'medicines_count': 0
-            #     }
-            
         if medicines:
-                # Có thuốc liên quan
                 prompt = self.create_prompt_with_medicines(user_question, medicine_context)
                 return {
                     'response': self.call_openai_api(prompt),
@@ -116,7 +87,6 @@ class OpenAIService:
                     'medicines_count': len(medicines)
                 }
         else:
-                # Không có thuốc phù hợp
                 prompt = self.create_prompt_without_medicines(user_question)
                 return {
                     'response': self.call_openai_api(prompt),
@@ -124,12 +94,3 @@ class OpenAIService:
                     'type': 'text_only',
                     'medicines_count': 0
                 }
-                
-        # except Exception as e:
-        #     logger.error(f"OpenAI API error: {str(e)}")
-        #     return {
-        #         'response': 'Xin lỗi, tôi gặp sự cố khi xử lý câu hỏi của bạn. Vui lòng thử lại sau hoặc liên hệ dược sĩ trực tiếp.',
-        #         'medicines': [],
-        #         'type': 'error',
-        #         'medicines_count': 0
-        #     }

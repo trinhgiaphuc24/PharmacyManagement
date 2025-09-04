@@ -40,7 +40,7 @@ CSRF_TRUSTED_ORIGINS = [
 # Application definition
 
 INSTALLED_APPS = [
-    'daphne',  # Add daphne at the top for WebSocket support
+    'daphne', 
     'colorfield',
     'admin_interface',
     'django.contrib.admin',
@@ -56,7 +56,7 @@ INSTALLED_APPS = [
     'drf_yasg',
     'oauth2_provider',
     'corsheaders',
-    'channels',  # Add channels for WebSocket
+    'channels',  
 ]
 
 MIDDLEWARE = [

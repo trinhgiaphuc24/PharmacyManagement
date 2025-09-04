@@ -6,6 +6,7 @@ class RoleEnum(models.TextChoices):
     ADMIN = "admin", "Admin"
     STAFF = "employee", "Employee"
     CUSTOMER = "customer", "Customer"
+    CUS_OFF = "cus_off", "Customer_offline"
 
 class StatusEnum(models.TextChoices):
     CHO_XAC_NHAN = "pending", "Chờ xác nhận"
@@ -41,8 +42,8 @@ class User(AbstractUser):
     email = models.EmailField(unique=True, null=True, blank=True)
     phone_number = models.CharField(max_length=15, blank=True, null=True)
     is_active = models.BooleanField(default=True)
-    is_staff = models.BooleanField(default=False)  # Cho phép truy cập admin
-    is_superuser = models.BooleanField(default=False)  # Super quyền
+    is_staff = models.BooleanField(default=False)  
+    is_superuser = models.BooleanField(default=False) 
     createdAt = models.DateTimeField(auto_now_add=True, null=True)
     userRole = models.CharField(max_length=20, choices=RoleEnum.choices,default=RoleEnum.CUSTOMER)
 
@@ -61,6 +62,7 @@ class Produce(BaseModel):
         return self.name
 
 class Medicine(BaseModel):
+    quantity = models.IntegerField(default=0)
     description = models.TextField(null=True, blank=True)
     ingredient = models.TextField(null=True, blank=True)
     price = models.FloatField()
